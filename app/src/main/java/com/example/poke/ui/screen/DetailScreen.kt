@@ -11,10 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Favorite
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -23,7 +19,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,44 +27,41 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.poke.R
 import com.example.poke.config.ViewModelFactory
-import com.example.poke.data.PokemonItem
-import com.example.poke.data.StatsItem
-import com.example.poke.data.TypesItem
+import com.example.poke.data.*
 import com.example.poke.data.viewmodel.PokemonViewModel
 import com.example.poke.di.Injection
 import com.example.poke.ui.common.UiState
 import com.example.poke.ui.component.LoadingCircular
 import com.example.poke.ui.theme.PokeTheme
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun DetailScreen(
-    pokemonId: Int,
-    pokemonName: String,
+    isFavorite: Boolean,
+    getDetail: () -> Unit,
     navigateBack: () -> Unit = {},
-    viewmodel: PokemonViewModel = viewModel(
-        factory = ViewModelFactory(Injection.provideRepository())
-    )
+    addFavorite: () -> Unit = {},
+    removeFavorite: () -> Unit = {},
+    uiStateDetailPokemon: StateFlow<UiState<DetailPokemonResponse>> = MutableStateFlow(UiState.Loading)
 ){
-    val currentPokemon = PokemonItem(name = pokemonName, url = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$pokemonId.png")
-//    val isFavorite = viewmodel.checkIsFavorite(currentPokemon)
-
     Scaffold(
         topBar = {
             TopBar(
                 navigateBack = navigateBack,
-                setFavorite = { viewmodel.addFavorite(currentPokemon) },
-                unsetFavorite = { viewmodel.removeFavorite(currentPokemon) },
-                isFavorite = false
+                setFavorite = { addFavorite() },
+                removeFavorite = { removeFavorite() },
+                isFavorite = isFavorite
             )
         }
     ) {innerPadding ->
         Column(
             Modifier.padding(innerPadding)
         ) {
-            viewmodel.uiStateDetailPokemon.collectAsState(initial = UiState.Loading).value.let{uiState ->
+            uiStateDetailPokemon.collectAsState(initial = UiState.Loading).value.let{uiState ->
                 when(uiState){
                     is UiState.Loading -> {
-                        viewmodel.getDetail(pokemonId)
+                        getDetail()
                         LoadingCircular()
                     }
                     is UiState.Success -> DetailContent(
@@ -94,7 +86,7 @@ fun DetailContent(
     modifier: Modifier = Modifier
 ){
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
     ) {
         Box{
@@ -143,26 +135,27 @@ fun DetailContent(
                 .align(Alignment.CenterHorizontally)
                 .padding(top = 32.dp, bottom = 16.dp)
         )
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ){
-            items(stats) {
-                Stats(statName = it.stat?.name.toString(), value = it.baseStat ?: 0)
-            }
-            item{
-                Stats(statName = "Speed", value = 54)
-            }
+        stats.map {
+            Spacer(modifier = Modifier.height(8.dp))
+            Stats(statName = it.stat?.name.toString(), value = it.baseStat ?: 0)
         }
+//        LazyColumn(
+//            verticalArrangement = Arrangement.spacedBy(8.dp)
+//        ){
+//            items(stats) {
+//                Stats(statName = it.stat?.name.toString(), value = it.baseStat ?: 0)
+//            }
+//        }
     }
 }
 
 @Composable
 fun TopBar(
+    modifier: Modifier = Modifier,
     setFavorite: () -> Unit,
-    unsetFavorite: () -> Unit,
+    removeFavorite: () -> Unit,
     navigateBack: () -> Unit = {},
     isFavorite: Boolean,
-    modifier: Modifier = Modifier,
 ){
     var isFavorite by rememberSaveable{
         mutableStateOf(isFavorite)
@@ -181,7 +174,7 @@ fun TopBar(
         actions = {
             IconButton(onClick = {
                 isFavorite = !isFavorite
-                if(isFavorite) setFavorite() else unsetFavorite()
+                if(isFavorite) setFavorite() else removeFavorite()
             }) {
                 Icon(
                     painter = painterResource(id = if(isFavorite) R.drawable.baseline_star_24 else R.drawable.baseline_star_outline_24),
@@ -256,8 +249,12 @@ fun Stats(
 
 @Preview(showBackground = true, device = Devices.PIXEL_4)
 @Composable
-fun PreviewDetailScreen(){
+fun PreviewDetailScreen(
+    pokemonViewModel: PokemonViewModel = viewModel(
+        factory = ViewModelFactory(Injection.provideRepository())
+    )
+){
     PokeTheme() {
-        DetailScreen(2, "bulbasaur")
+        DetailScreen(isFavorite = false, getDetail = {pokemonViewModel.getDetail(2)})
     }
 }

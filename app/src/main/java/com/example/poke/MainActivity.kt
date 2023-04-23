@@ -8,14 +8,13 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -23,6 +22,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.poke.config.ViewModelFactory
+import com.example.poke.data.FavoritePokemon
+import com.example.poke.data.viewmodel.PokemonViewModel
+import com.example.poke.di.Injection
 import com.example.poke.ui.navigation.Screen
 import com.example.poke.ui.screen.DetailScreen
 import com.example.poke.ui.screen.FavoriteScreen
@@ -48,7 +51,10 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun PokeApp(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    pokemonViewModel: PokemonViewModel = viewModel(
+        factory = ViewModelFactory(Injection.provideRepository())
+    )
 ){
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -69,14 +75,18 @@ fun PokeApp(
                 Column{
                     when (selectedScreen) {
                         0 -> HomeScreen(
+                            uiStatePokemons = pokemonViewModel.uiStatePokemons,
+                            getAllPokemon = { pokemonViewModel.getAllPokemons() },
                             contentPadding = bottomBarHeight,
                             navToDetail = {id, name ->
                                 navController.navigate(Screen.Detail.createRoute(id, name))
                             }
                         )
                         1 -> FavoriteScreen(
+                            uiStateFavoritePokemons = pokemonViewModel.uiStateFavoritePokemons,
+                            getFavoritePokemon = { pokemonViewModel.getFavoritePokemon() },
                             contentPadding = bottomBarHeight,
-                            navToDetail = {id, name ->
+                            navToDetail = { id, name ->
                                 navController.navigate(Screen.Detail.createRoute(id, name))
                             }
                         )
@@ -97,7 +107,16 @@ fun PokeApp(
             ){
                 val id = it.arguments?.getInt("pokemonId") ?: 2
                 val name = it.arguments?.getString("pokemonName") ?: ""
-                DetailScreen(pokemonId = id, pokemonName = name, navigateBack = { navController.navigateUp() })
+                val currentPokemon = FavoritePokemon(id, name)
+
+                DetailScreen(
+                    uiStateDetailPokemon = pokemonViewModel.uiStateDetailPokemon,
+                    getDetail = { pokemonViewModel.getDetail(id) },
+                    addFavorite = { pokemonViewModel.addFavorite(currentPokemon) },
+                    removeFavorite = { pokemonViewModel.removeFavorite(currentPokemon) },
+                    navigateBack = { navController.navigateUp() },
+                    isFavorite = pokemonViewModel.isFavoritePokemon(currentPokemon)
+                )
             }
         }
     }

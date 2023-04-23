@@ -3,4 +3,6 @@
     <string name="search_icon">search icon</string>
     <string name="search_pokemon">Search your Pokemon</string>
     <string name="base_stats">Base Stats</string>
+    <string name="no_favorite">No favorite pokemon yet 😭</string>
+    <string name="no_pokemon">There is no pokemon to show</string>
 </resources>

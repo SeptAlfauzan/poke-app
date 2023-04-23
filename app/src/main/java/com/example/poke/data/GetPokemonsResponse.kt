@@ -25,3 +25,8 @@ data class PokemonItem(
 	@field:SerializedName("url")
 	val url: String
 )
+
+data class FavoritePokemon(
+	val id: Int,
+	val name: String,
+)

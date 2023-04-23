@@ -5,20 +5,20 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
 class Repository {
-    private val favoritePokemons: MutableSet<PokemonItem> = mutableSetOf()
+    private val favoritePokemons: MutableSet<FavoritePokemon> = mutableSetOf()
     private val apiService = ApiConfig.getApiService()
 
     suspend fun getAllPokemons(): Flow<GetPokemonsResponse> = flowOf(apiService.getAll(limit = 100))
 
     suspend fun getDetailPokemon(id: Int): Flow<DetailPokemonResponse> = flowOf(apiService.getDetail(id))
 
-    fun addFavoritePokemon(pokemon: PokemonItem): Flow<Boolean> = flowOf(favoritePokemons.add(pokemon))
+    fun addFavoritePokemon(pokemon: FavoritePokemon): Flow<Boolean> = flowOf(favoritePokemons.add(pokemon))
 
-    fun removeFavoritePokemon(pokemon: PokemonItem): Flow<Boolean> = flowOf(favoritePokemons.remove(pokemon))
+    fun removeFavoritePokemon(pokemon: FavoritePokemon): Flow<Boolean> = flowOf(favoritePokemons.remove(pokemon))
 
-    fun getFavoritesPokemon(): Flow<Set<PokemonItem>> = flowOf(favoritePokemons)
+    fun getFavoritesPokemon(): Flow<Set<FavoritePokemon>> = flowOf(favoritePokemons)
 
-    fun checkIsFavorite(pokemon: PokemonItem): Flow<Boolean> = flowOf(favoritePokemons.contains(pokemon))
+    fun checkIsFavorite(pokemon: FavoritePokemon): Boolean = favoritePokemons.contains(pokemon)
 
     companion object {
 

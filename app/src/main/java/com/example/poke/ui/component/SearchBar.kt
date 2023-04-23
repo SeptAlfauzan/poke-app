@@ -22,7 +22,8 @@ import com.example.poke.ui.theme.PokeTheme
 
 @Composable
 fun SearchBar(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onChange: (String) -> Unit = {},
 ){
     var input by remember{ mutableStateOf("") }
     val shape = RoundedCornerShape(32.dp)
@@ -36,6 +37,7 @@ fun SearchBar(
         value = input,
         onValueChange = {
             input = it
+            onChange(it)
         },
         trailingIcon = {
             Icon(imageVector = Icons.Default.Search, contentDescription = stringResource(R.string.search_icon))
