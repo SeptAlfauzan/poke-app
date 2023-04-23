@@ -1,6 +1,7 @@
 package com.example.poke.ui.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -39,9 +40,11 @@ fun PokeCard(
         modifier = modifier
             .widthIn(min = 240.dp, max = 320.dp)
             .height(240.dp)
+            .border(width = 0.5.dp, Color.LightGray, shape = RoundedCornerShape(8.dp))
             .clip(RoundedCornerShape(8.dp))
-            .shadow(elevation = 4.dp, shape = RoundedCornerShape(8.dp))
         ,
+        backgroundColor = MaterialTheme.colors.surface,
+        elevation = 0.dp
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(

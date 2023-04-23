@@ -6,11 +6,13 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -27,6 +29,7 @@ import com.example.poke.data.FavoritePokemon
 import com.example.poke.data.viewmodel.PokemonViewModel
 import com.example.poke.di.Injection
 import com.example.poke.ui.navigation.Screen
+import com.example.poke.ui.screen.AboutScreen
 import com.example.poke.ui.screen.DetailScreen
 import com.example.poke.ui.screen.FavoriteScreen
 import com.example.poke.ui.screen.HomeScreen
@@ -62,6 +65,9 @@ fun PokeApp(
     val bottomBarHeight = 56
 
     Scaffold(
+        topBar = {
+            if(currentRoute == Screen.Home.route) TopBar(navController = navController)
+        },
         bottomBar = {
              if(currentRoute == Screen.Home.route) BottomNav(activeMenu = selectedScreen, setActiveMenu = { selectedScreen = it }, modifier = Modifier.height(bottomBarHeight.dp))
         }
@@ -92,6 +98,9 @@ fun PokeApp(
                         )
                     }
                 }
+            }
+            composable(Screen.About.route){
+                AboutScreen()
             }
             composable(
                 route = Screen.Detail.route,
@@ -156,8 +165,35 @@ fun BottomNav(
 }
 
 @Composable
-fun SettingsScreen() {
-    Text(text = "Settings screen content")
+fun TopBar(
+    navController: NavHostController
+){
+    var expanded by remember {
+        mutableStateOf(false)
+    }
+    TopAppBar(
+        actions = {
+            IconButton(onClick = { expanded = true }) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert, contentDescription = "menu",
+                )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                    DropdownMenuItem(
+                        onClick = {
+                            expanded = false
+                            navController.navigate(Screen.About.route)
+                        }
+                    ) {
+                        Text("About")
+                    }
+            }
+        },
+        title = {}
+    )
 }
 
 @Preview(showBackground = true)

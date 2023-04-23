@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -74,9 +75,9 @@ fun FavoriteContent(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(vertical = contentPadding.dp)
         ){
-            itemsIndexed( items = pokemons) { index, pokemon ->
+            items( items = pokemons, key = {it.name}) { pokemon ->
                 PokeCard(
-                    modifier = Modifier.clickable { navToDetail(index + 1, pokemon.name) },
+                    modifier = Modifier.clickable { navToDetail(pokemon.id, pokemon.name) },
                     imageUrl = "$spriteBaseUrl${pokemon.id}.png",
                     name = pokemon.name ?: ""
                 )
