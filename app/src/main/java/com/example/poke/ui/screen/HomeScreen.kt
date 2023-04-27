@@ -8,29 +8,29 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.poke.data.viewmodel.PokemonViewModel
-import com.example.poke.ui.component.PokeCard
-import com.example.poke.ui.component.SearchBar
-import com.example.poke.ui.theme.PokeTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.poke.R
 import com.example.poke.config.ViewModelFactory
 import com.example.poke.data.GetPokemonsResponse
 import com.example.poke.data.PokemonItem
+import com.example.poke.data.viewmodel.PokemonViewModel
 import com.example.poke.di.Injection
 import com.example.poke.ui.common.UiState
 import com.example.poke.ui.component.LoadingCircular
+import com.example.poke.ui.component.PokeCard
+import com.example.poke.ui.component.SearchBar
+import com.example.poke.ui.theme.PokeTheme
 import kotlinx.coroutines.flow.StateFlow
 
 
@@ -74,7 +74,7 @@ fun HomeScreen(
 fun HomeContent(
     contentPadding: Int,
     pokemon: List<PokemonItem>,
-    navToDetail: (Int, String) -> Unit = { i: Int, s: String -> },
+    navToDetail: (Int, String) -> Unit = { Int, String -> },
 ){
     var pokemons by rememberSaveable {
         mutableStateOf(pokemon)
@@ -93,6 +93,7 @@ fun HomeContent(
     }else{
         val spriteBaseUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/"
         LazyVerticalGrid(
+            modifier = Modifier.testTag("CardList"),
             columns = GridCells.Fixed(2),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -106,9 +107,10 @@ fun HomeContent(
                 PokeCard(
                     modifier = Modifier
                         .clickable { navToDetail(id, pokemon.name) }
-                        .animateItemPlacement(tween(durationMillis = 100)),
+                        .animateItemPlacement(tween(durationMillis = 100))
+                    ,
                     imageUrl = "$spriteBaseUrl$id.png",
-                    name = pokemon.name ?: ""
+                    name = pokemon.name
                 )
             }
         }

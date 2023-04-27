@@ -3,17 +3,20 @@ package com.example.poke
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -25,27 +28,44 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.poke.config.ViewModelFactory
+import com.example.poke.data.DetailPokemonResponse
 import com.example.poke.data.FavoritePokemon
+import com.example.poke.data.GetPokemonsResponse
 import com.example.poke.data.viewmodel.PokemonViewModel
 import com.example.poke.di.Injection
+import com.example.poke.ui.common.UiState
 import com.example.poke.ui.navigation.Screen
 import com.example.poke.ui.screen.AboutScreen
 import com.example.poke.ui.screen.DetailScreen
 import com.example.poke.ui.screen.FavoriteScreen
 import com.example.poke.ui.screen.HomeScreen
 import com.example.poke.ui.theme.PokeTheme
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             PokeTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    PokeApp()
+                    val viewModel: PokemonViewModel = viewModel(
+                        factory = ViewModelFactory(Injection.provideRepository())
+                    )
+                    PokeApp(
+                        uiStatePokemons = viewModel.uiStatePokemons,
+                        uiStateDetailPokemon = viewModel.uiStateDetailPokemon,
+                        uiStateFavoritePokemons = viewModel.uiStateFavoritePokemons,
+                        getAllPokemon = { viewModel.getAllPokemons() },
+                        getFavoritePokemon = { viewModel.getFavoritePokemon() },
+                        getDetail = { id -> viewModel.getDetail(id) } ,
+                        addFavorite = { pokemon -> viewModel.addFavorite(pokemon) } ,
+                        removeFavorite =  { pokemon -> viewModel.removeFavorite(pokemon) } ,
+                        isFavoritePokemon =  { pokemon -> viewModel.isFavoritePokemon(pokemon) } ,
+                    )
                 }
             }
         }
@@ -55,21 +75,32 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun PokeApp(
     navController: NavHostController = rememberNavController(),
-    pokemonViewModel: PokemonViewModel = viewModel(
-        factory = ViewModelFactory(Injection.provideRepository())
-    )
+    uiStatePokemons: StateFlow<UiState<GetPokemonsResponse>>,
+    uiStateFavoritePokemons: StateFlow<UiState<Set<FavoritePokemon>>> = mutableStateOf(UiState.Loading) as StateFlow<UiState<Set<FavoritePokemon>>>,
+    uiStateDetailPokemon: StateFlow<UiState<DetailPokemonResponse>> = MutableStateFlow(UiState.Loading),
+    getAllPokemon: () -> Unit = {},
+    getFavoritePokemon: () -> Unit = {},
+    getDetail: (Int) -> Unit = {},
+    addFavorite: (FavoritePokemon) -> Unit = {},
+    removeFavorite: (FavoritePokemon) -> Unit = {},
+    isFavoritePokemon: (FavoritePokemon) -> Boolean,
 ){
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    var selectedScreen by rememberSaveable{ mutableStateOf(0) }
+    var selectedScreen by rememberSaveable{ mutableStateOf(Screen.Home.route) }//for screen between home and favorite only
     val bottomBarHeight = 56
+    val isHomeOrFavoriteScreen = (currentRoute == Screen.Home.route || currentRoute == Screen.Favorite.route)
 
     Scaffold(
         topBar = {
-            if(currentRoute == Screen.Home.route) TopBar(navController = navController)
+            if(isHomeOrFavoriteScreen) TopBar(navController = navController)
         },
         bottomBar = {
-             if(currentRoute == Screen.Home.route) BottomNav(activeMenu = selectedScreen, setActiveMenu = { selectedScreen = it }, modifier = Modifier.height(bottomBarHeight.dp))
+            if(isHomeOrFavoriteScreen) BottomNav(
+                activeMenu = selectedScreen,
+                setActiveMenu = { selectedScreen = it },
+                navController = navController,
+                modifier = Modifier.height(bottomBarHeight.dp))
         }
     ) {innerPadding ->
         NavHost(
@@ -78,26 +109,24 @@ fun PokeApp(
             modifier = Modifier.padding(innerPadding)
         ){
             composable(Screen.Home.route){
-                Column{
-                    when (selectedScreen) {
-                        0 -> HomeScreen(
-                            uiStatePokemons = pokemonViewModel.uiStatePokemons,
-                            getAllPokemon = { pokemonViewModel.getAllPokemons() },
-                            contentPadding = bottomBarHeight,
-                            navToDetail = {id, name ->
-                                navController.navigate(Screen.Detail.createRoute(id, name))
-                            }
-                        )
-                        1 -> FavoriteScreen(
-                            uiStateFavoritePokemons = pokemonViewModel.uiStateFavoritePokemons,
-                            getFavoritePokemon = { pokemonViewModel.getFavoritePokemon() },
-                            contentPadding = bottomBarHeight,
-                            navToDetail = { id, name ->
-                                navController.navigate(Screen.Detail.createRoute(id, name))
-                            }
-                        )
+                HomeScreen(
+                    uiStatePokemons = uiStatePokemons,
+                    getAllPokemon = { getAllPokemon() },
+                    contentPadding = bottomBarHeight,
+                    navToDetail = {id, name ->
+                        navController.navigate(Screen.Detail.createRoute(id, name))
                     }
-                }
+                )
+            }
+            composable(Screen.Favorite.route){
+                FavoriteScreen(
+                    uiStateFavoritePokemons = uiStateFavoritePokemons,
+                    getFavoritePokemon = { getFavoritePokemon() },
+                    contentPadding = bottomBarHeight,
+                    navToDetail = { id, name ->
+                        navController.navigate(Screen.Detail.createRoute(id, name))
+                    }
+                )
             }
             composable(Screen.About.route){
                 AboutScreen()
@@ -119,12 +148,12 @@ fun PokeApp(
                 val currentPokemon = FavoritePokemon(id, name)
 
                 DetailScreen(
-                    uiStateDetailPokemon = pokemonViewModel.uiStateDetailPokemon,
-                    getDetail = { pokemonViewModel.getDetail(id) },
-                    addFavorite = { pokemonViewModel.addFavorite(currentPokemon) },
-                    removeFavorite = { pokemonViewModel.removeFavorite(currentPokemon) },
+                    uiStateDetailPokemon = uiStateDetailPokemon,
+                    getDetail = { getDetail(id) },
+                    addFavorite = { addFavorite(currentPokemon) },
+                    removeFavorite = { removeFavorite(currentPokemon) },
                     navigateBack = { navController.navigateUp() },
-                    isFavorite = pokemonViewModel.isFavoritePokemon(currentPokemon)
+                    isFavorite = isFavoritePokemon(currentPokemon)
                 )
             }
         }
@@ -132,15 +161,16 @@ fun PokeApp(
 }
 
 val listMenu = listOf(
-    Pair("Home", Icons.Default.Home),
-    Pair("Favorite", Icons.Default.Favorite)
+    Pair(Screen.Home.route, Icons.Default.Home),
+    Pair(Screen.Favorite.route, Icons.Default.Favorite)
 )
 
 @Composable
 fun BottomNav(
     modifier: Modifier = Modifier,
-    activeMenu: Int = 0,
-    setActiveMenu: (Int) -> Unit
+    activeMenu: String = Screen.Home.route,
+    navController: NavHostController,
+    setActiveMenu: (String) -> Unit
 ){
     BottomNavigation(
         backgroundColor = MaterialTheme.colors.background,
@@ -149,9 +179,13 @@ fun BottomNav(
     ) {
         listMenu.forEachIndexed{index, menu ->
             BottomNavigationItem(
-                selected = activeMenu == index,
+                modifier = Modifier.semantics(mergeDescendants = true){
+                      contentDescription = "${menu.first}-Nav"
+                },
+                selected = activeMenu == menu.first,
                 onClick = {
-                    setActiveMenu(index)
+                    setActiveMenu(menu.first)
+                    navController.navigate(menu.first)
                 },
                 label = {
                     Text(menu.first)
@@ -166,12 +200,15 @@ fun BottomNav(
 
 @Composable
 fun TopBar(
-    navController: NavHostController
+    navController: NavHostController,
+    modifier: Modifier = Modifier
 ){
     var expanded by remember {
         mutableStateOf(false)
     }
+
     TopAppBar(
+        backgroundColor = MaterialTheme.colors.background ,
         actions = {
             IconButton(onClick = { expanded = true }) {
                 Icon(
@@ -183,16 +220,21 @@ fun TopBar(
                 onDismissRequest = { expanded = false }
             ) {
                     DropdownMenuItem(
+                        modifier = Modifier
+                            .semantics(mergeDescendants = true){
+                                contentDescription = "about_page"
+                            },
                         onClick = {
                             expanded = false
                             navController.navigate(Screen.About.route)
-                        }
+                        },
                     ) {
                         Text("About")
                     }
             }
         },
-        title = {}
+        title = {},
+        elevation = 0.dp
     )
 }
 
@@ -200,6 +242,19 @@ fun TopBar(
 @Composable
 fun DefaultPreview() {
     PokeTheme {
-        PokeApp()
+        val viewModel: PokemonViewModel = viewModel(
+            factory = ViewModelFactory(Injection.provideRepository())
+        )
+        PokeApp(
+            uiStatePokemons = viewModel.uiStatePokemons,
+            uiStateDetailPokemon = viewModel.uiStateDetailPokemon,
+            uiStateFavoritePokemons = viewModel.uiStateFavoritePokemons,
+            getAllPokemon = { viewModel.getAllPokemons() },
+            getFavoritePokemon = { viewModel.getFavoritePokemon() },
+            getDetail = { id -> viewModel.getDetail(id) } ,
+            addFavorite = { pokemon -> viewModel.addFavorite(pokemon) } ,
+            removeFavorite =  { pokemon -> viewModel.removeFavorite(pokemon) } ,
+            isFavoritePokemon =  { pokemon -> viewModel.isFavoritePokemon(pokemon) } ,
+        )
     }
 }

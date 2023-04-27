@@ -2,11 +2,9 @@ package com.example.poke.ui.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -16,9 +14,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,7 +28,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.poke.R
 import com.example.poke.config.ViewModelFactory
-import com.example.poke.data.*
+import com.example.poke.data.DetailPokemonResponse
+import com.example.poke.data.StatsItem
+import com.example.poke.data.TypesItem
 import com.example.poke.data.viewmodel.PokemonViewModel
 import com.example.poke.di.Injection
 import com.example.poke.ui.common.UiState
@@ -40,10 +43,10 @@ import kotlinx.coroutines.flow.StateFlow
 fun DetailScreen(
     isFavorite: Boolean,
     getDetail: () -> Unit,
-    navigateBack: () -> Unit = {},
     addFavorite: () -> Unit = {},
     removeFavorite: () -> Unit = {},
-    uiStateDetailPokemon: StateFlow<UiState<DetailPokemonResponse>> = MutableStateFlow(UiState.Loading)
+    uiStateDetailPokemon: StateFlow<UiState<DetailPokemonResponse>> = MutableStateFlow(UiState.Loading),
+    navigateBack: () -> Unit = {},
 ){
     Scaffold(
         topBar = {
@@ -94,7 +97,14 @@ fun DetailContent(
                 .fillMaxWidth()
                 .height(240.dp)
                 .clip(RoundedCornerShape(bottomStartPercent = 100, bottomEndPercent = 100))
-                .background(MaterialTheme.colors.secondary)
+                .background(
+                    brush = Brush.verticalGradient(
+                        listOf(
+                            MaterialTheme.colors.background,
+                            MaterialTheme.colors.secondary,
+                        )
+                    )
+                )
             )
             AsyncImage(
                 model = imageUrl,
@@ -139,13 +149,6 @@ fun DetailContent(
             Spacer(modifier = Modifier.height(8.dp))
             Stats(statName = it.stat?.name.toString(), value = it.baseStat ?: 0)
         }
-//        LazyColumn(
-//            verticalArrangement = Arrangement.spacedBy(8.dp)
-//        ){
-//            items(stats) {
-//                Stats(statName = it.stat?.name.toString(), value = it.baseStat ?: 0)
-//            }
-//        }
     }
 }
 
@@ -164,27 +167,37 @@ fun TopBar(
     TopAppBar(
         modifier = modifier,
         navigationIcon = {
-            IconButton(onClick = { navigateBack() }) {
+            IconButton(
+                modifier = Modifier.semantics {
+                    contentDescription = "nav-back"
+                },
+                onClick = { navigateBack() },
+            ) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack, contentDescription = "back",
-                    tint = Color.White
+                    tint = MaterialTheme.colors.onBackground
                 )
             }
         },
         actions = {
-            IconButton(onClick = {
-                isFavorite = !isFavorite
-                if(isFavorite) setFavorite() else removeFavorite()
-            }) {
+            IconButton(
+                modifier = Modifier.semantics{
+                     contentDescription = "favorite-button"
+                },
+                onClick = {
+                    isFavorite = !isFavorite
+                    if(isFavorite) setFavorite() else removeFavorite()
+                }
+            ) {
                 Icon(
                     painter = painterResource(id = if(isFavorite) R.drawable.baseline_star_24 else R.drawable.baseline_star_outline_24),
                     contentDescription = "favorite",
-                    tint = Color.White
+                    tint = MaterialTheme.colors.onBackground
                 )
             }
         },
         title = { Text(text = "") },
-        backgroundColor = MaterialTheme.colors.secondary,
+        backgroundColor = MaterialTheme.colors.background,
         elevation = 0.dp
     )
 }

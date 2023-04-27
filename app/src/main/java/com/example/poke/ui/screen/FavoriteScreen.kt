@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -16,10 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.poke.R
+import com.example.poke.data.FavoritePokemon
 import com.example.poke.ui.common.UiState
 import com.example.poke.ui.component.LoadingCircular
 import com.example.poke.ui.component.PokeCard
-import com.example.poke.data.FavoritePokemon
 import kotlinx.coroutines.flow.StateFlow
 
 @Composable
@@ -27,8 +26,8 @@ fun FavoriteScreen(
     modifier: Modifier = Modifier,
     contentPadding: Int = 32,
     getFavoritePokemon: () -> Unit,
-    navToDetail: (Int, String) -> Unit,
     uiStateFavoritePokemons: StateFlow<UiState<Set<FavoritePokemon>>> = mutableStateOf(UiState.Loading) as StateFlow<UiState<Set<FavoritePokemon>>>,
+    navToDetail: (Int, String) -> Unit,
 ){
     Column(modifier = modifier
         .fillMaxSize()

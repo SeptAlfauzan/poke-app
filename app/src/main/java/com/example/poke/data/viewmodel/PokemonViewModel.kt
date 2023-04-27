@@ -3,7 +3,10 @@ package com.example.poke.data.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.poke.data.*
+import com.example.poke.data.DetailPokemonResponse
+import com.example.poke.data.FavoritePokemon
+import com.example.poke.data.GetPokemonsResponse
+import com.example.poke.data.Repository
 import com.example.poke.ui.common.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
