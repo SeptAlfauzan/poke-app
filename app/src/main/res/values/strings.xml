@@ -5,4 +5,7 @@
     <string name="base_stats">Base Stats</string>
     <string name="no_favorite">No favorite pokemon yet 😭</string>
     <string name="no_pokemon">There is no pokemon to show</string>
+    <string name="pokeball_img_bg">pokeball image background</string>
+    <string name="poke">Poké</string>
+    <string name="evolution_chain">Evolution Chain</string>
 </resources>

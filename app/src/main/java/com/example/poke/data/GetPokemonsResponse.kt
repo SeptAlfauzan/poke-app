@@ -1,6 +1,12 @@
 package com.example.poke.data
 
+import android.os.Parcelable
+import androidx.annotation.NonNull
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
+import kotlinx.parcelize.Parcelize
 
 data class GetPokemonsResponse(
 
@@ -24,9 +30,4 @@ data class PokemonItem(
 
 	@field:SerializedName("url")
 	val url: String
-)
-
-data class FavoritePokemon(
-	val id: Int,
-	val name: String,
 )

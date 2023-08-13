@@ -1,8 +1,8 @@
 package com.example.poke.config
 
 import com.example.poke.BuildConfig
-import com.example.poke.data.DetailPokemonResponse
-import com.example.poke.data.GetPokemonsResponse
+import com.example.poke.data.*
+import com.example.poke.data.viewmodel.DetailPokemonEssentialsResponse
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -13,10 +13,16 @@ import retrofit2.http.Query
 
 interface PokeApiService {
     @GET("pokemon")
-    suspend fun getAll(@Query("limit") limit: Int): GetPokemonsResponse
-
+    suspend fun getAll(@Query("limit") limit: Int, @Query("offset") offset: Int): GetPokemonsResponse
     @GET("pokemon/{id}")
     suspend fun getDetail(@Path("id") id: Int): DetailPokemonResponse
+    @GET("pokemon/{id}")
+    suspend fun getDetailEssentials(@Path("id") id: Int): DetailPokemonEssentialsResponse
+    @GET("pokemon-species/{id}")
+    suspend fun getSpecies(@Path("id") id: Int): PokemonSpeciesResponse
+
+    @GET("evolution-chain/{id}")
+    suspend fun getEvolutionChain(@Path("id") id: Int): EvolutionChainResponse
 }
 
 class ApiConfig{

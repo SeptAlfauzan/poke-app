@@ -164,10 +164,10 @@ data class Home(
 data class Species(
 
 	@field:SerializedName("name")
-	val name: String? = null,
+	val name: String,
 
 	@field:SerializedName("url")
-	val url: String? = null
+	val url: String
 )
 
 data class VersionGroup(
@@ -683,10 +683,10 @@ data class Platinum(
 data class Type(
 
 	@field:SerializedName("name")
-	val name: String? = null,
+	val name: String,
 
 	@field:SerializedName("url")
-	val url: String? = null
+	val url: String
 )
 
 data class RubySapphire(

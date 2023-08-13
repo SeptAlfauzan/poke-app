@@ -1,9 +1,9 @@
 package com.example.poke.ui.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.MaterialTheme
@@ -14,84 +14,121 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.poke.R
+import com.example.poke.data.Type
+import com.example.poke.data.TypesItem
+import com.example.poke.data.pokemonTypes
 import com.example.poke.ui.theme.PokeTheme
 
 @Composable
 fun PokeCard(
-    modifier: Modifier = Modifier,
     imageUrl: String,
-    name: String
-){
+    name: String,
+    types: List<String>,
+    modifier: Modifier = Modifier,
+) {
+
+    val colorMatrix = ColorMatrix()
+    colorMatrix.setToSaturation(0f)
+
     Card(
         modifier = modifier
-            .widthIn(min = 240.dp, max = 320.dp)
-            .height(240.dp)
-            .border(width = 0.5.dp, Color.LightGray, shape = RoundedCornerShape(8.dp))
+            .fillMaxWidth()
+            .border(width = 0.dp, Color.LightGray, shape = RoundedCornerShape(8.dp))
             .clip(RoundedCornerShape(8.dp))
-            .testTag("PokemonCard")
-        ,
+            .testTag("PokemonCard"),
         backgroundColor = MaterialTheme.colors.surface,
-        elevation = 0.dp
+        elevation = 4.dp
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
                     horizontal = 32.dp,
                     vertical = 16.dp
                 )
-        ){
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = name.capitalize(),
+                    modifier = Modifier
+                        .width(124.dp),
+                    style = MaterialTheme.typography.h5.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                for (item in types){
+                    PokemonType(type = item, iconUrl = pokemonTypes[item]?.iconImageUrl ?: "-")
+                }
+            }
+            Spacer(modifier = Modifier.weight(1f))
             AsyncImage(
                 model = imageUrl,
                 modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .weight(1f)
-                ,
+                    .size(124.dp)
+                    .align(Alignment.Bottom),
                 contentDescription = name,
-                placeholder = painterResource(id = R.drawable.ic_launcher_foreground)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = name.capitalize(),
-                modifier = Modifier
-                    .fillMaxWidth(),
-                style = MaterialTheme.typography.body1.copy(
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                ),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                placeholder = painterResource(id = R.drawable.pokeball),
+//                colorFilter = ColorFilter.colorMatrix(colorMatrix),
+//                alpha = 0.3f
             )
         }
     }
 }
 
+@Composable
+fun PokemonType(type: String, iconUrl: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colors.onSurface.copy(alpha = 0.3f))
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+        ,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AsyncImage(
+            model = iconUrl,
+            placeholder = painterResource(id = R.drawable.pokeball),
+            contentDescription = "type image icon",
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.size(8.dp))
+        Text(text = type, style = MaterialTheme.typography.h6.copy(
+            color = Color.White,
+            fontWeight = FontWeight.Bold
+        ))
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
-fun CardPreview(){
+fun CardPreview() {
     PokeTheme() {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colors.background
-        ){
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            LazyColumn(
                 modifier = Modifier.padding(vertical = 32.dp),
                 contentPadding = PaddingValues(horizontal = 32.dp)
-            ){
+            ) {
                 items(10) {
                     PokeCard(
                         imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$it.png",
-                        name = "test"
+                        name = "name",
+                        types = listOf("leaf")
                     )
                 }
             }
