@@ -2,6 +2,7 @@ package com.example.poke
 
 import android.os.Bundle
 import android.util.Log
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -60,6 +61,11 @@ import kotlinx.coroutines.flow.StateFlow
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+        )
+
         setContent {
             PokeTheme {
                 Surface(
@@ -125,7 +131,7 @@ fun PokeApp(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     var selectedScreen by rememberSaveable { mutableStateOf(Screen.Home.route) }//for screen between home and favorite only
-    val bottomBarHeight = 56
+    val bottomBarHeight = 52
     val isHomeOrFavoriteScreen =
         (currentRoute == Screen.Home.route || currentRoute == Screen.Favorite.route)
 
@@ -178,8 +184,7 @@ fun PokeApp(
                     navArgument("pokemonName") {
                         type = NavType.StringType
                     },
-
-                    )
+                )
             ) {
                 val id = it.arguments?.getInt("pokemonId") ?: 2
                 val name = it.arguments?.getString("pokemonName") ?: ""
@@ -233,9 +238,10 @@ fun BottomNav(
                         contentDescription = "${menu.first}-Nav"
                     }
                     .clip(RoundedCornerShape(32.dp))
-                    .background(if (activeMenu == menu.first) MaterialTheme.colors.primary else Color.Transparent)
-                ,
+                    .background(if (activeMenu == menu.first) MaterialTheme.colors.primary else Color.Transparent),
                 selected = activeMenu == menu.first,
+                selectedContentColor = MaterialTheme.colors.onPrimary,
+                unselectedContentColor = MaterialTheme.colors.onSurface,
                 onClick = {
                     setActiveMenu(menu.first)
                     navController.navigate(menu.first)
@@ -261,7 +267,7 @@ fun TopBar(
     }
 
     TopAppBar(
-        modifier = modifier,
+        modifier = modifier.background(MaterialTheme.colors.primary).padding(top = 32.dp),
         backgroundColor = MaterialTheme.colors.primary,
         actions = {
             IconButton(onClick = { expanded = true }) {
@@ -297,8 +303,8 @@ fun TopBar(
 fun DefaultPreview() {
     PokeTheme {
         val viewModel: PokemonViewModel = viewModel(
-        factory = ViewModelFactory(Injection.provideRepository(LocalContext.current))
-    )
+            factory = ViewModelFactory(Injection.provideRepository(LocalContext.current))
+        )
         PokeApp(
             uiStatePokemon = viewModel.uiStatePokemons,
             uiStateDetailPokemon = viewModel.uiStateDetailPokemon,

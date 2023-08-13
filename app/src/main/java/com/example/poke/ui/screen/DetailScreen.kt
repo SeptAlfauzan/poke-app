@@ -19,8 +19,11 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +46,7 @@ import com.example.poke.R
 import com.example.poke.config.ViewModelFactory
 import com.example.poke.data.*
 import com.example.poke.data.database.Types
+import com.example.poke.data.database.toTypes
 import com.example.poke.data.viewmodel.PokemonViewModel
 import com.example.poke.di.Injection
 import com.example.poke.ui.common.UiState
@@ -53,7 +57,6 @@ import com.example.poke.utils.getTwoDominantColors
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun DetailScreen(
@@ -76,10 +79,6 @@ fun DetailScreen(
         topBar = {
             TopBar(
                 navigateBack = navigateBack,
-                setFavorite = { },
-                removeFavorite = { },
-                isFavoriteState = isFavoriteState,
-                checkIsFavoritePokemon = checkIsFavoritePokemon,
                 modifier = Modifier.background(
                     color = Color(
                         topBarColor ?: MaterialTheme.colors.background.hashCode()
@@ -104,14 +103,19 @@ fun DetailScreen(
                         }
                     }
                     is UiState.Success -> DetailContent(
+                        id = uiState.data.id ?: -1,
                         name = uiState.data.name ?: "",
                         imageUrl = uiState.data.sprites?.other?.officialArtwork?.frontDefault ?: "",
                         stats = uiState.data.stats as List<StatsItem>,
-                        type = uiState.data.types as List<TypesItem>,
+                        types = uiState.data.types as List<TypesItem>,
                         updateTopBarColor = { topBarColor = it },
                         evoChainId = evolutionChainId,
                         getEvoChain = getEvoChain,
-                        evoChainUiState = uiStateEvolutionChain
+                        evoChainUiState = uiStateEvolutionChain,
+                        isFavoriteState = isFavoriteState,
+                        checkIsFavoritePokemon = checkIsFavoritePokemon,
+                        addFavorite = addFavorite,
+                        removeFavorite = removeFavorite,
                     )
                     is UiState.Error -> Text(text = "Error ${uiState.errorMessage}")
                 }
@@ -151,28 +155,24 @@ fun DetailContent(
     name: String,
     imageUrl: String,
     stats: List<StatsItem>,
-    type: List<TypesItem>,
+    types: List<TypesItem>,
     updateTopBarColor: (Int) -> Unit = {},
     modifier: Modifier = Modifier,
     evoChainId: Int?,
     getEvoChain: (id: Int) -> Unit,
-    evoChainUiState: StateFlow<UiState<EvolutionChainResponse>>
+    evoChainUiState: StateFlow<UiState<EvolutionChainResponse>>,
+    isFavoriteState: StateFlow<UiState<Boolean>>,
+    addFavorite: (List<Types>) -> Unit,
+    removeFavorite: (types: List<Types>) -> Unit,
+    id: Int,
+    checkIsFavoritePokemon: () -> Unit
 ) {
     var dominantColor: Int? by remember {
         mutableStateOf(null)
     }
+//    var isFavorite by remember{ mutableStateOf(isFavoriteState.value) }
     val context = LocalContext.current
     val pagerState = rememberPagerState(initialPage = 0)
-    LaunchedEffect(imageUrl) {
-        getTwoDominantColors(
-            imageUrl = imageUrl,
-            context = context,
-            updateState = {
-                dominantColor = it
-                updateTopBarColor(it)
-            })
-    }
-
     val pagerContent = listOf<PagerContentData>(
         PagerContentData(stringResource(R.string.base_stats)) { StatsContainer(stats) },
         PagerContentData(stringResource(R.string.evolution_chain)) {
@@ -183,6 +183,16 @@ fun DetailContent(
             )
         },
     )
+
+    LaunchedEffect(imageUrl) {
+        getTwoDominantColors(
+            imageUrl = imageUrl,
+            context = context,
+            updateState = {
+                dominantColor = it
+                updateTopBarColor(it)
+            })
+    }
 
     Column(
         modifier = modifier
@@ -204,14 +214,47 @@ fun DetailContent(
                         )
                     )
             )
-            AsyncImage(
-                model = imageUrl,
-                contentDescription = null,
-                placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
-                modifier = Modifier
+            Box(
+                Modifier
                     .size(224.dp)
                     .align(Alignment.BottomCenter)
-            )
+            ) {
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = null,
+                    placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
+                    modifier = Modifier.fillMaxSize()
+                )
+                isFavoriteState.collectAsState(initial = UiState.Loading).value.let { uiState ->
+                    when (uiState) {
+                        is UiState.Success -> {
+                            Log.d("TAG", "DetailContent: ${uiState.data}")
+                            FloatingActionButton(
+                                onClick = {
+                                    val typesItem = types.map { it.toTypes(id) }
+                                    if (uiState.data) removeFavorite(typesItem) else addFavorite(typesItem)
+                                },
+                                backgroundColor = MaterialTheme.colors.primary,
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .offset(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (uiState.data) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
+                                    contentDescription = "favorite icon"
+                                )
+                            }
+                        }
+                        is UiState.Loading -> checkIsFavoritePokemon()
+                        is UiState.Error -> Toast.makeText(
+                            context,
+                            uiState.errorMessage,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+
+            }
         }
 
         Text(
@@ -221,15 +264,15 @@ fun DetailContent(
             ),
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
-                .padding(top = 32.dp, bottom = 16.dp)
+                .padding(vertical = 16.dp)
         )
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+            columns = GridCells.Adaptive(minSize = 112.dp),
             modifier = Modifier.padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            items(type) {
+            items(types) {
                 val name = it.type!!.name
                 PokemonType(type = name, iconUrl = pokemonTypes[name]!!.iconImageUrl)
             }
@@ -238,7 +281,7 @@ fun DetailContent(
         PagerIndicator(
             listPagerContentData = pagerContent,
             pagerState = pagerState,
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 32.dp)
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 40.dp)
         )
         HorizontalPager(pageCount = 2, state = pagerState) { index ->
             Column(
@@ -267,7 +310,9 @@ private fun PagerIndicator(
                 text = pagerContentData.name,
                 style = MaterialTheme.typography.body1.copy(
                     textAlign = TextAlign.Center,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = if (pagerState.currentPage == index) 1f else 0.3f)
+                    color = if (pagerState.currentPage == index) MaterialTheme.colors.onPrimary else MaterialTheme.colors.onSurface.copy(
+                        alpha = 0.3f
+                    )
                 ),
                 modifier = Modifier
                     .clickable {
@@ -362,7 +407,8 @@ private fun EvolutionChainContainer(
                                     if (isNextItemAvailable) {
                                         Icon(
                                             imageVector = Icons.Default.ArrowForward,
-                                            contentDescription = null
+                                            contentDescription = stringResource(R.string.arrow_evolution),
+                                            tint = MaterialTheme.colors.onSurface.copy(alpha = 0.3f),
                                         )
                                         val item = evoChainList[currentIndex + 1]
                                         val id = item.second.getIdFromUrl()
@@ -427,67 +473,20 @@ private fun SpeciesCards(id: Int?, name: String) {
 @Composable
 private fun TopBar(
     modifier: Modifier = Modifier,
-    setFavorite: () -> Unit,
-    removeFavorite: () -> Unit,
     navigateBack: () -> Unit = {},
-    isFavoriteState: StateFlow<UiState<Boolean>>,
-    checkIsFavoritePokemon: () -> Unit,
 ) {
-    var isFavorite by rememberSaveable {
-        mutableStateOf(false)
-    }
-    var isLoading by rememberSaveable {
-        mutableStateOf(true)
-    }
-    isFavoriteState.collectAsState(initial = UiState.Loading).value.let { uiState ->
-        when (uiState) {
-            is UiState.Error -> {
-                isLoading = false
-                Toast.makeText(LocalContext.current, uiState.errorMessage, Toast.LENGTH_SHORT)
-                    .show()
-            }
-            is UiState.Success -> {
-                isLoading = false
-                isFavorite = uiState.data
-            }
-            is UiState.Loading -> {
-                checkIsFavoritePokemon()
-            }
-        }
-    }
-
-
     TopAppBar(
-        modifier = modifier,
+        modifier = modifier.background(Color.Transparent).padding(top = 32.dp),
         navigationIcon = {
-            if (!isLoading) {
-                IconButton(
-                    modifier = Modifier.semantics {
-                        contentDescription = "nav-back"
-                    },
-                    onClick = { navigateBack() },
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack, contentDescription = "back",
-                        tint = MaterialTheme.colors.onBackground
-                    )
-                }
-            }
-        },
-        actions = {
             IconButton(
                 modifier = Modifier.semantics {
-                    contentDescription = "favorite-button"
+                    contentDescription = "nav-back"
                 },
-                onClick = {
-                    isFavorite = !isFavorite
-                    if (isFavorite) setFavorite() else removeFavorite()
-                }
+                onClick = { navigateBack() },
             ) {
                 Icon(
-                    painter = painterResource(id = if (isFavorite) R.drawable.baseline_star_24 else R.drawable.baseline_star_outline_24),
-                    contentDescription = "favorite",
-                    tint = MaterialTheme.colors.onBackground
+                    imageVector = Icons.Default.ArrowBack, contentDescription = "back",
+                    tint = MaterialTheme.colors.onPrimary
                 )
             }
         },
@@ -507,7 +506,7 @@ private fun Stats(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colors.onSurface.copy(alpha = 0.1f))
+            .background(MaterialTheme.colors.secondary.copy(alpha = 0.1f))
             .padding(8.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -520,7 +519,7 @@ private fun Stats(
                 .weight(1.5f)
                 .align(Alignment.CenterVertically)
                 .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colors.primaryVariant.copy(0.3f))
+                .background(MaterialTheme.colors.secondary.copy(0.3f))
                 .padding(8.dp),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

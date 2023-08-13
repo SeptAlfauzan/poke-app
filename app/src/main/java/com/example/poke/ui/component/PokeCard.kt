@@ -33,6 +33,7 @@ fun PokeCard(
     imageUrl: String,
     name: String,
     types: List<String>,
+    isLarge: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
 
@@ -52,36 +53,39 @@ fun PokeCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = 32.dp,
+                    horizontal = if(isLarge) 32.dp else 12.dp,
                     vertical = 16.dp
                 )
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = if(isLarge) Alignment.Start else Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
                 Text(
                     text = name.capitalize(),
                     modifier = Modifier
-                        .width(124.dp),
+                        .fillMaxWidth(),
                     style = MaterialTheme.typography.h5.copy(
                         fontWeight = FontWeight.Bold
                     ),
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis
+                )
+                if(!isLarge) AsyncImage(
+                    model = imageUrl,
+                    modifier = Modifier.size(124.dp).align(Alignment.CenterHorizontally),
+                    contentDescription = name,
+                    placeholder = painterResource(id = R.drawable.pokeball),
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 for (item in types){
                     PokemonType(type = item, iconUrl = pokemonTypes[item]?.iconImageUrl ?: "-")
                 }
             }
-            Spacer(modifier = Modifier.weight(1f))
-            AsyncImage(
+            if(isLarge) AsyncImage(
                 model = imageUrl,
                 modifier = Modifier
                     .size(124.dp)
                     .align(Alignment.Bottom),
                 contentDescription = name,
                 placeholder = painterResource(id = R.drawable.pokeball),
-//                colorFilter = ColorFilter.colorMatrix(colorMatrix),
-//                alpha = 0.3f
             )
         }
     }
@@ -92,7 +96,7 @@ fun PokemonType(type: String, iconUrl: String, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colors.onSurface.copy(alpha = 0.3f))
+            .background(MaterialTheme.colors.secondary.copy(alpha = 0.2f))
             .padding(horizontal = 12.dp, vertical = 4.dp)
         ,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -105,10 +109,7 @@ fun PokemonType(type: String, iconUrl: String, modifier: Modifier = Modifier) {
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.size(8.dp))
-        Text(text = type, style = MaterialTheme.typography.h6.copy(
-            color = Color.White,
-            fontWeight = FontWeight.Bold
-        ))
+        Text(text = type, style = MaterialTheme.typography.body1)
     }
 }
 

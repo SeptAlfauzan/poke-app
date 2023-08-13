@@ -8,4 +8,5 @@
     <string name="pokeball_img_bg">pokeball image background</string>
     <string name="poke">Poké</string>
     <string name="evolution_chain">Evolution Chain</string>
+    <string name="arrow_evolution">arrow evolution icon</string>
 </resources>

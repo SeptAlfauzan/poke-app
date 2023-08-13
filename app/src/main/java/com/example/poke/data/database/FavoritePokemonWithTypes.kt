@@ -7,16 +7,17 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Relation
+import com.example.poke.data.TypesItem
 import kotlinx.parcelize.Parcelize
+import java.util.UUID
 
 
 @Parcelize
 @Entity(tableName = "type")
 data class Types(
-    @PrimaryKey(autoGenerate = true)
-    @NonNull
+    @PrimaryKey
     @ColumnInfo(name = "id")
-    val id: Int,
+    val id: String,
 
     @NonNull
     @ColumnInfo(name = "pokemon_id")
@@ -30,6 +31,13 @@ data class Types(
     @ColumnInfo(name = "url")
     val url: String
 ) : Parcelable
+
+fun TypesItem.toTypes(pokemonId: Int) = Types(
+    pokemonId = pokemonId,
+    name = this.type?.name ?: "None",
+    url = this.type?.url ?: "None",
+    id = "$pokemonId-${this.type?.name ?: "-"}"
+)
 
 @Parcelize
 @Entity(tableName = "pokemons")

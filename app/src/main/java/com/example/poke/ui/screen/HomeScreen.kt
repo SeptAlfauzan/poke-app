@@ -147,7 +147,8 @@ fun HomeContent(
             item {
                 Text(
                     stringResource(R.string.no_pokemon),
-                    style = MaterialTheme.typography.body1
+                    style = MaterialTheme.typography.h6,
+                    color = MaterialTheme.colors.onSurface.copy(0.3f)
                 )
             }
         } else {
