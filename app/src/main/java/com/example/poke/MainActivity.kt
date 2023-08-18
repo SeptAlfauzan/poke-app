@@ -7,10 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -144,7 +141,7 @@ fun PokeApp(
                 activeMenu = selectedScreen,
                 setActiveMenu = { selectedScreen = it },
                 navController = navController,
-                modifier = Modifier.height(bottomBarHeight.dp)
+                modifier = Modifier.height(56.dp)
             )
         }
     ) { innerPadding ->
@@ -228,7 +225,9 @@ fun BottomNav(
 ) {
     BottomNavigation(
         backgroundColor = MaterialTheme.colors.background,
-        modifier = modifier,
+        modifier = modifier
+            .padding(horizontal = 16.dp)
+            .clip(RoundedCornerShape(32.dp)),
         elevation = 8.dp
     ) {
         listMenu.forEachIndexed { _, menu ->
@@ -238,7 +237,8 @@ fun BottomNav(
                         contentDescription = "${menu.first}-Nav"
                     }
                     .clip(RoundedCornerShape(32.dp))
-                    .background(if (activeMenu == menu.first) MaterialTheme.colors.primary else Color.Transparent),
+                    .background(if (activeMenu == menu.first) MaterialTheme.colors.primary else Color.Transparent)
+                ,
                 selected = activeMenu == menu.first,
                 selectedContentColor = MaterialTheme.colors.onPrimary,
                 unselectedContentColor = MaterialTheme.colors.onSurface,
@@ -267,7 +267,9 @@ fun TopBar(
     }
 
     TopAppBar(
-        modifier = modifier.background(MaterialTheme.colors.primary).padding(top = 32.dp),
+        modifier = modifier
+            .background(MaterialTheme.colors.primary)
+            .padding(top = 32.dp),
         backgroundColor = MaterialTheme.colors.primary,
         actions = {
             IconButton(onClick = { expanded = true }) {
@@ -302,9 +304,7 @@ fun TopBar(
 @Composable
 fun DefaultPreview() {
     PokeTheme {
-        val viewModel: PokemonViewModel = viewModel(
-            factory = ViewModelFactory(Injection.provideRepository(LocalContext.current))
-        )
+        val viewModel: PokemonViewModel by viewModel()
         PokeApp(
             uiStatePokemon = viewModel.uiStatePokemons,
             uiStateDetailPokemon = viewModel.uiStateDetailPokemon,

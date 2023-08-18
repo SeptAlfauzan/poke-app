@@ -476,7 +476,9 @@ private fun TopBar(
     navigateBack: () -> Unit = {},
 ) {
     TopAppBar(
-        modifier = modifier.background(Color.Transparent).padding(top = 32.dp),
+        modifier = modifier
+            .background(Color.Transparent)
+            .padding(top = 32.dp),
         navigationIcon = {
             IconButton(
                 modifier = Modifier.semantics {
@@ -540,10 +542,8 @@ private fun Stats(
 @Composable
 fun PreviewDetailScreen(
 ) {
-    PokeTheme() {
-        val pokemonViewModel: PokemonViewModel = viewModel(
-            factory = ViewModelFactory(Injection.provideRepository(LocalContext.current))
-        )
+    PokeTheme {
+        val pokemonViewModel: PokemonViewModel by viewModel()
         DetailScreen(
             isFavoriteState = MutableStateFlow(UiState.Success(false)),
             getDetail = { pokemonViewModel.getDetail(1) },

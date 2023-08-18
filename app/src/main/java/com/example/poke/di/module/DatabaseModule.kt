@@ -1,4 +1,4 @@
-package com.example.poke.di
+package com.example.poke.di.module
 
 import android.content.Context
 import androidx.room.Room

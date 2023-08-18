@@ -173,9 +173,7 @@ fun HomeContent(
 @Composable
 fun HomeScreenPreview() {
     PokeTheme {
-        val viewModel: PokemonViewModel = viewModel(
-            factory = ViewModelFactory(Injection.provideRepository(LocalContext.current))
-        )
+        val viewModel: PokemonViewModel by viewModel()
         HomeScreen(
             uiStatePokemons = viewModel.uiStatePokemons,
             getAllPokemon = { viewModel.getAllPokemons() },
